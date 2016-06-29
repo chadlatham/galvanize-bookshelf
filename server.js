@@ -10,7 +10,6 @@ const session = require('cookie-session');
 
 const authors = require('./routes/authors');
 const books = require('./routes/books');
-const users = require('./routes/users');
 
 const app = express();
 
@@ -21,9 +20,9 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('short'));
 }
 
-app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(bodyParser.json());
 app.use(session({
   keys: [
     'key1',//process.env.SESSION_KEY1,
@@ -35,7 +34,6 @@ app.use(express.static(path.join('public')));
 
 app.use(authors);
 app.use(books);
-app.use(users);
 
 app.use((_req, res) => {
   res.sendStatus(404);
@@ -53,4 +51,4 @@ app.listen(port, () => {
   console.log('Listening on port', port);
 });
 
-module.exports = app;
+module.exports = app; // Used for testing the assignment
