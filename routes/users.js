@@ -5,6 +5,32 @@ const router = express.Router();
 const knex = require('../knex');
 const bcrypt = require('bcrypt');
 
+const checkAuth = function(req, res, next) {
+  // Guard clause for private resources!!!! Very important
+  if (!req.session.user) {
+    return res.sendStatus(401);
+  }
+
+  next();
+};
+
+router.get('/users/books', checkAuth, (req, res, next) => {
+  const userId = req.session.user.id;
+
+  knex('books')
+    // .select('id', 'author_id', 'title')
+    .innerJoin('users_books', 'users_books.book_id', 'books.id')
+    .where('users_books.user_id', userId)
+    .then((books) => {
+      // console.log('TEST!!!!!!!!!!');
+      // console.log(books);
+      res.send(books);
+    })
+    .catch((err) => {
+      next(err);
+    });
+});
+
 router.post('/users', (req, res, next) => {
   const userInfo = req.body;
 
