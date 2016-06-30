@@ -18,13 +18,33 @@ router.get('/users/books', checkAuth, (req, res, next) => {
   const userId = req.session.user.id;
 
   knex('books')
-    // .select('id', 'author_id', 'title')
     .innerJoin('users_books', 'users_books.book_id', 'books.id')
     .where('users_books.user_id', userId)
     .then((books) => {
-      // console.log('TEST!!!!!!!!!!');
-      // console.log(books);
       res.send(books);
+    })
+    .catch((err) => {
+      next(err);
+    });
+});
+
+router.get('/users/books/:bookId', checkAuth, (req, res, next) => {
+  const userId = req.session.user.id;
+  const bookId = Number.parseInt(req.params.bookId);
+
+  knex('users_books')
+    .where('book_id', bookId)
+    .then((books) => {
+      if (books.length === 0) {
+        return res.sendStatus(400);
+      }
+
+      return knex('books')
+        .where('id', bookId)
+        .first()
+        .then((book) => {
+          res.send(book);
+        });
     })
     .catch((err) => {
       next(err);
