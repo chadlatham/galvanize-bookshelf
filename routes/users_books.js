@@ -3,11 +3,10 @@
 const express = require('express');
 const router = express.Router();
 const knex = require('../knex');
-const bcrypt = require('bcrypt');
 
 const checkAuth = function(req, res, next) {
   // Guard clause for private resources!!!! Very important
-  if (!req.session.user) {
+  if (!req.session.userId) {
     return res.sendStatus(401);
   }
 
@@ -15,10 +14,9 @@ const checkAuth = function(req, res, next) {
 };
 
 router.get('/users/books', checkAuth, (req, res, next) => {
-  const userId = req.session.user.id;
   knex('books')
     .innerJoin('users_books', 'users_books.book_id', 'books.id')
-    .where('users_books.user_id', userId)
+    .where('users_books.user_id', req.session.userId)
     .then((books) => {
       res.send(books);
     })
@@ -28,12 +26,14 @@ router.get('/users/books', checkAuth, (req, res, next) => {
 });
 
 router.get('/users/books/:bookId', checkAuth, (req, res, next) => {
-  const userId = req.session.user.id;
   const bookId = Number.parseInt(req.params.bookId);
 
-  knex('users_books')
-    .innerJoin('books', 'users_books.book_id', 'books.id')
-    .where('book_id', bookId)
+  knex('books')
+    .innerJoin('users_books', 'users_books.book_id', 'books.id')
+    .where({
+      'book_id': bookId,
+      'users_books.user_id': req.session.userId
+    })
     .first()
     .then((book) => {
       if (!book) {
@@ -48,8 +48,11 @@ router.get('/users/books/:bookId', checkAuth, (req, res, next) => {
 });
 
 router.post('/users/books/:bookId', checkAuth, (req, res, next) => {
-  const userId = req.session.user.id;
   const bookId = Number.parseInt(req.params.bookId);
+
+  if (Number.isNaN(bookId)) {
+    return next();
+  }
 
   knex('books')
     .where('id', bookId)
@@ -62,7 +65,7 @@ router.post('/users/books/:bookId', checkAuth, (req, res, next) => {
       return knex('users_books')
         .insert({
           book_id: bookId,
-          user_id: userId
+          user_id: req.session.userId
         }, '*')
         .then((newEntries) => {
           res.send(newEntries[0]);
@@ -74,12 +77,15 @@ router.post('/users/books/:bookId', checkAuth, (req, res, next) => {
 });
 
 router.delete('/users/books/:bookId', checkAuth, (req, res, next) => {
-  const userId = req.session.user.id;
   const bookId = Number.parseInt(req.params.bookId);
+
+  if (Number.isNaN(bookId)) {
+    return next();
+  }
 
   knex('users_books')
     .del()
-    .where('user_id', userId)
+    .where('user_id', req.session.userId)
     .andWhere('book_id', bookId)
     .then((count) => {
       if (count === 0) {
@@ -88,7 +94,7 @@ router.delete('/users/books/:bookId', checkAuth, (req, res, next) => {
 
       res.send({
         book_id: bookId,
-        user_id: userId
+        user_id: req.session.userId
       });
     })
     .catch((err) => {

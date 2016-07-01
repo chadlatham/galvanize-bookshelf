@@ -26,7 +26,8 @@ router.post('/session', (req, res, next) => {
         }
 
         // User is authenticated
-        req.session.user = user;
+        // Sensitive information goes in the session, non-sensitive in the cookie. Cookie used at browser level, session used at http level.
+        req.session.userId = user.id;
         res.cookie('loggedIn', true);
         res.sendStatus(200);
       });
