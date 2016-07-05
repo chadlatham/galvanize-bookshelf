@@ -16,10 +16,17 @@ router.get('/authors', (_req, res, next) => {
 });
 
 router.get('/authors/:id', (req, res, next) => {
+  const id = Number.parseInt(req.params.id);
+  if (Number.isNaN(id)) {
+    return next();
+  }
   knex('authors')
     .where('id', req.params.id)
     .first()
     .then((author) => {
+      if (!author) {
+        return next();
+      }
       res.send(author);
     })
     .catch((err) => {
@@ -51,13 +58,20 @@ router.patch('/authors/:id', (req, res, next) => {
 });
 
 router.delete('/authors/:id', (req, res, next) => {
+  const id = Number.parseInt(req.params.id);
+  if (Number.isNaN(id)) {
+    return next();
+  }
   knex('authors')
-  .where('id', req.params.id)
+  .where('id', id)
   .first()
   .then((author) => {
+    if (!author) {
+      return next();
+    }
     knex('authors')
       .del()
-      .where('id', req.params.id)
+      .where('id', id)
       .then(() => {
         delete author.id;
         res.send(author);

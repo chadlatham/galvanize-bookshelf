@@ -79,7 +79,7 @@ router.post('/books', (req, res, next) => {
   }
 
   knex('authors')
-    .where('id', authorID)
+    .where('id', authorId)
     .first()
     .then((author) => {
       if (!author) {
